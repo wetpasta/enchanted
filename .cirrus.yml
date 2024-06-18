@@ -13,23 +13,25 @@ task:
     - df -h
 
   setup_swap_script:
-    - sudo fallocate -l 64G /swapfile
-    - sudo chmod 600 /swapfile
-    - sudo mkswap /swapfile
-    - sudo swapon /swapfile
-    - sudo swapon --show
-    - free -h
+    # Using a smaller swap file size
+    - sudo fallocate -l 16G /swapfile || true
+    - sudo chmod 600 /swapfile || true
+    - sudo mkswap /swapfile || true
+    - sudo swapon /swapfile || true
+    - sudo swapon --show || true
+    - free -h || true
 
   install_dependencies_script:
     # Run the setup script from the provided URL
     - sudo apt-get update
-    - sudo apt-get install -y curl git-lfs
+    - sudo apt-get install -y curl
     - curl -fsSL https://raw.githubusercontent.com/herobuxx/setup/main/setup.sh | bash
 
   build_script:
     - mkdir -p /tmp/hlcyn
     - cd /tmp/hlcyn
     - |
+      # Initializing repo with retry mechanism in case of failure
       RETRIES=3
       COUNT=0
       until [ $COUNT -ge $RETRIES ]
