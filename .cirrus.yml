@@ -1,0 +1,40 @@
+task:
+  name: Machine
+  timeout_in: 120m
+  stateful: true
+  container:
+    image: orkunergun/docker:ubuntu
+    cpu: 8
+    memory: 32G
+    greedy: true
+
+  show_space:
+    - df -h
+
+  setup_swap:
+    - sudo fallocate -l 64G /swapfile
+    - sudo chmod 600 /swapfile
+    - sudo mkswap /swapfile
+    - sudo swapon /swapfile
+    - sudo swapon --show
+    - free -h
+
+  build_script:
+    - mkdir -p /tmp/hlcyn
+    - cd /tmp/hlcyn
+    - repo init -u https://github.com/halcyonproject/manifest -b 14.2 --git-lfs --depth 1
+    - repo sync --current-branch --no-tags --no-clone-bundle -j$(nproc --all)
+    - ccache -M 50G
+    - git clone https://github.com/liliumproject/device_xiaomi_chime device/xiaomi/chime --depth 1
+    - git clone https://github.com/liliumproject/kernel_xiaomi_chime kernel/xiaomi/chime --depth 1
+    - git clone https://www.opencode.net/liliumproject/vendor_xiaomi_chime vendor/xiaomi/chime  --depth 1
+    - git clone https://www.opencode.net/liliumproject/vendor_xiaomi_lime vendor/xiaomi/lime  --depth 1
+    - source build/envsetup.sh
+    - lunch halcyon_lime-ap1a-user
+    - make carthage -j$(nproc --all)
+
+  artifacts:
+    paths:
+      - "/tmp/hlcyn/out/target/product/lime/halcyon*.zip"
+      - "/tmp/hlcyn/out/target/product/lime/boot.img"
+      - "/tmp/hlcyn/out/target/product/lime/recovery.img"
